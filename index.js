@@ -6,6 +6,11 @@ import { createClient } from '@supabase/supabase-js';
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Condigo de configuracion para el mensaje
+app.get('/', (req, res) => {
+  res.send('Backend de Flotaris activo 💥');
+});
+
 app.use(cors());
 app.use(express.json());
 
