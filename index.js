@@ -20,8 +20,8 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-app.get('/vehiculos', async (req, res) => {
-  const { data, error } = await supabase.from('vehiculos').select('*');
+app.get('/vehicles', async (req, res) => {
+  const { data, error } = await supabase.from('vehicles').select('*');
   if (error) return res.status(500).json({ error });
   res.json(data);
 });
