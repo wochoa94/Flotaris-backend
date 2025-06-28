@@ -22,5 +22,5 @@ app.get('/vehiculos', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(API Flotaris corriendo en puerto ${PORT});
+  console.log(`API Flotaris corriendo en puerto ${PORT}`);
 });
