@@ -1,21 +1,30 @@
 import { supabase } from '../config/supabase.js';
+import { convertKeysToSnakeCase, convertKeysToCamelCase } from '../utils/caseConverter.js';
 
 export const driverService = {
   async createDriver(driverData) {
+    // Convert camelCase keys to snake_case for database
+    const snakeCaseData = convertKeysToSnakeCase(driverData);
+    
     const { data, error } = await supabase
       .from('drivers')
-      .insert(driverData)
+      .insert(snakeCaseData)
       .select()
       .single();
 
     if (error) throw new Error(error.message);
-    return data;
+    
+    // Convert snake_case keys back to camelCase for frontend
+    return convertKeysToCamelCase(data);
   },
 
   async updateDriver(id, driverData) {
+    // Convert camelCase keys to snake_case for database
+    const snakeCaseData = convertKeysToSnakeCase(driverData);
+    
     const { data, error } = await supabase
       .from('drivers')
-      .update(driverData)
+      .update(snakeCaseData)
       .eq('id', id)
       .select()
       .single();
@@ -26,7 +35,8 @@ export const driverService = {
       throw new Error('Driver not found');
     }
 
-    return data;
+    // Convert snake_case keys back to camelCase for frontend
+    return convertKeysToCamelCase(data);
   },
 
   async deleteDriver(id) {
@@ -47,6 +57,7 @@ export const driverService = {
 
     if (error) throw new Error(error.message);
     
+    // This return value doesn't contain database keys, so no conversion needed
     return { isUnique: data.length === 0 };
   }
 };

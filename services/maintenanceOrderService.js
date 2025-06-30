@@ -1,21 +1,30 @@
 import { supabase } from '../config/supabase.js';
+import { convertKeysToSnakeCase, convertKeysToCamelCase } from '../utils/caseConverter.js';
 
 export const maintenanceOrderService = {
   async createMaintenanceOrder(orderData) {
+    // Convert camelCase keys to snake_case for database
+    const snakeCaseData = convertKeysToSnakeCase(orderData);
+    
     const { data, error } = await supabase
       .from('maintenance_orders')
-      .insert(orderData)
+      .insert(snakeCaseData)
       .select()
       .single();
 
     if (error) throw new Error(error.message);
-    return data;
+    
+    // Convert snake_case keys back to camelCase for frontend
+    return convertKeysToCamelCase(data);
   },
 
   async updateMaintenanceOrder(id, orderData) {
+    // Convert camelCase keys to snake_case for database
+    const snakeCaseData = convertKeysToSnakeCase(orderData);
+    
     const { data, error } = await supabase
       .from('maintenance_orders')
-      .update(orderData)
+      .update(snakeCaseData)
       .eq('id', id)
       .select()
       .single();
@@ -26,7 +35,8 @@ export const maintenanceOrderService = {
       throw new Error('Maintenance order not found');
     }
 
-    return data;
+    // Convert snake_case keys back to camelCase for frontend
+    return convertKeysToCamelCase(data);
   },
 
   async deleteMaintenanceOrder(id) {
@@ -39,9 +49,12 @@ export const maintenanceOrderService = {
   },
 
   async updateMaintenanceOrderStatus(id, statusData) {
+    // Convert camelCase keys to snake_case for database
+    const snakeCaseData = convertKeysToSnakeCase(statusData);
+    
     const { data, error } = await supabase
       .from('maintenance_orders')
-      .update(statusData)
+      .update(snakeCaseData)
       .eq('id', id)
       .select()
       .single();
@@ -52,7 +65,8 @@ export const maintenanceOrderService = {
       throw new Error('Maintenance order not found');
     }
 
-    return data;
+    // Convert snake_case keys back to camelCase for frontend
+    return convertKeysToCamelCase(data);
   },
 
   async getMaintenanceOrdersByVehicle(vehicleId, statuses = []) {
@@ -68,6 +82,8 @@ export const maintenanceOrderService = {
     const { data, error } = await query;
 
     if (error) throw new Error(error.message);
-    return data || [];
+    
+    // Convert snake_case keys to camelCase for frontend
+    return convertKeysToCamelCase(data || []);
   }
 };

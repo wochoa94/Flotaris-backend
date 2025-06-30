@@ -1,4 +1,5 @@
 import { supabase } from '../config/supabase.js';
+import { convertKeysToCamelCase } from '../utils/caseConverter.js';
 
 export const fleetService = {
   async getAllFleetData() {
@@ -14,11 +15,12 @@ export const fleetService = {
     if (maintenanceOrdersResult.error) throw new Error(maintenanceOrdersResult.error.message);
     if (vehicleSchedulesResult.error) throw new Error(vehicleSchedulesResult.error.message);
 
+    // Convert all snake_case keys to camelCase for frontend
     return {
-      vehicles: vehiclesResult.data || [],
-      drivers: driversResult.data || [],
-      maintenance_orders: maintenanceOrdersResult.data || [],
-      vehicle_schedules: vehicleSchedulesResult.data || []
+      vehicles: convertKeysToCamelCase(vehiclesResult.data || []),
+      drivers: convertKeysToCamelCase(driversResult.data || []),
+      maintenanceOrders: convertKeysToCamelCase(maintenanceOrdersResult.data || []),
+      vehicleSchedules: convertKeysToCamelCase(vehicleSchedulesResult.data || [])
     };
   }
 };

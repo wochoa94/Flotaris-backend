@@ -1,21 +1,30 @@
 import { supabase } from '../config/supabase.js';
+import { convertKeysToSnakeCase, convertKeysToCamelCase } from '../utils/caseConverter.js';
 
 export const vehicleScheduleService = {
   async createVehicleSchedule(scheduleData) {
+    // Convert camelCase keys to snake_case for database
+    const snakeCaseData = convertKeysToSnakeCase(scheduleData);
+    
     const { data, error } = await supabase
       .from('vehicle_schedules')
-      .insert(scheduleData)
+      .insert(snakeCaseData)
       .select()
       .single();
 
     if (error) throw new Error(error.message);
-    return data;
+    
+    // Convert snake_case keys back to camelCase for frontend
+    return convertKeysToCamelCase(data);
   },
 
   async updateVehicleSchedule(id, scheduleData) {
+    // Convert camelCase keys to snake_case for database
+    const snakeCaseData = convertKeysToSnakeCase(scheduleData);
+    
     const { data, error } = await supabase
       .from('vehicle_schedules')
-      .update(scheduleData)
+      .update(snakeCaseData)
       .eq('id', id)
       .select()
       .single();
@@ -26,7 +35,8 @@ export const vehicleScheduleService = {
       throw new Error('Vehicle schedule not found');
     }
 
-    return data;
+    // Convert snake_case keys back to camelCase for frontend
+    return convertKeysToCamelCase(data);
   },
 
   async deleteVehicleSchedule(id) {
@@ -52,7 +62,8 @@ export const vehicleScheduleService = {
       throw new Error('Vehicle schedule not found');
     }
 
-    return data;
+    // Convert snake_case keys back to camelCase for frontend
+    return convertKeysToCamelCase(data);
   },
 
   async getActiveSchedulesForVehicle(vehicleId) {
@@ -63,7 +74,9 @@ export const vehicleScheduleService = {
       .eq('status', 'active');
 
     if (error) throw new Error(error.message);
-    return data || [];
+    
+    // Convert snake_case keys to camelCase for frontend
+    return convertKeysToCamelCase(data || []);
   },
 
   async getOtherSchedulesForVehicle(vehicleId, excludeId, statuses = []) {
@@ -83,6 +96,8 @@ export const vehicleScheduleService = {
     const { data, error } = await query;
 
     if (error) throw new Error(error.message);
-    return data || [];
+    
+    // Convert snake_case keys to camelCase for frontend
+    return convertKeysToCamelCase(data || []);
   }
 };
