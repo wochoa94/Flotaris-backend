@@ -7,6 +7,16 @@ export const vehicleScheduleController = {
       res.status(201).json(schedule);
     } catch (error) {
       console.error('Add vehicle schedule error:', error);
+      
+      // Handle business logic errors with 409 Conflict status
+      if (error.message.includes('unavailable') || 
+          error.message.includes('existing schedule') || 
+          error.message.includes('maintenance order') ||
+          error.message.includes('Start date must be before end date') ||
+          error.message.includes('Start date cannot be in the past')) {
+        return res.status(409).json({ error: error.message });
+      }
+      
       res.status(500).json({ error: 'Failed to add vehicle schedule' });
     }
   },
@@ -18,9 +28,20 @@ export const vehicleScheduleController = {
       res.json(schedule);
     } catch (error) {
       console.error('Update vehicle schedule error:', error);
+      
       if (error.message === 'Vehicle schedule not found') {
         return res.status(404).json({ error: error.message });
       }
+      
+      // Handle business logic errors with 409 Conflict status
+      if (error.message.includes('unavailable') || 
+          error.message.includes('existing schedule') || 
+          error.message.includes('maintenance order') ||
+          error.message.includes('Start date must be before end date') ||
+          error.message.includes('Start date cannot be in the past')) {
+        return res.status(409).json({ error: error.message });
+      }
+      
       res.status(500).json({ error: 'Failed to update vehicle schedule' });
     }
   },
