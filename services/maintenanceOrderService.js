@@ -158,24 +158,33 @@ export const maintenanceOrderService = {
   },
 
   async updateMaintenanceOrderStatus(id, statusData) {
-    // Convert camelCase keys to snake_case for database
-    const snakeCaseData = convertKeysToSnakeCase(statusData);
-    
-    const { data, error } = await supabase
-      .from('maintenance_orders')
-      .update(snakeCaseData)
-      .eq('id', id)
-      .select()
-      .single();
+    // Extract parameters for the RPC function
+    const { status, cost, quotationDetails, comments } = statusData;
+
+    // Call the PostgreSQL RPC function for atomic updates
+    const { data, error } = await supabase.rpc('update_maintenance_order_and_vehicle_status', {
+      p_order_id: id,
+      p_new_status: status,
+      p_cost: cost || null,
+      p_quotation_details: quotationDetails || null,
+      p_comments: comments || null
+    });
 
     if (error) throw new Error(error.message);
     
-    if (!data) {
-      throw new Error('Maintenance order not found');
+    if (!data || data.length === 0) {
+      throw new Error('No data returned from status update');
+    }
+
+    // Extract the updated maintenance order from the RPC response
+    const updatedMaintenanceOrder = data[0]?.updated_maintenance_order;
+    
+    if (!updatedMaintenanceOrder) {
+      throw new Error('Failed to retrieve updated maintenance order');
     }
 
     // Convert snake_case keys back to camelCase for frontend
-    return convertKeysToCamelCase(data);
+    return convertKeysToCamelCase(updatedMaintenanceOrder);
   },
 
   async getMaintenanceOrdersByVehicle(vehicleId, statuses = []) {

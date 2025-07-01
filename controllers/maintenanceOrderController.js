@@ -62,9 +62,21 @@ export const maintenanceOrderController = {
       res.json(order);
     } catch (error) {
       console.error('Update maintenance order status error:', error);
-      if (error.message === 'Maintenance order not found') {
+      
+      // Handle specific PostgreSQL RPC errors
+      if (error.message === 'Maintenance order not found' || 
+          error.message === 'Associated vehicle not found') {
         return res.status(404).json({ error: error.message });
       }
+      
+      // Handle business logic validation errors
+      if (error.message.includes('Invalid status transition') ||
+          error.message.includes('Cannot change status of a') ||
+          error.message.includes('Cost and quotation details are required') ||
+          error.message.includes('Maintenance order must transition to')) {
+        return res.status(400).json({ error: error.message });
+      }
+      
       res.status(500).json({ error: 'Failed to update maintenance order status' });
     }
   },
