@@ -1,6 +1,6 @@
 import cron from 'node-cron';
 import { zonedTimeToUtc, utcToZonedTime } from 'date-fns-tz';
-import { format, startOfDay } from 'date-fns';
+import { format, startOfDay, endOfDay } from 'date-fns';
 import { supabase } from '../config/supabase.js';
 
 const GUATEMALA_TIMEZONE = 'America/Guatemala';
@@ -74,7 +74,7 @@ async function checkActiveToCompleted() {
     
     // Get current date in Guatemala timezone
     const nowInGuatemala = utcToZonedTime(new Date(), GUATEMALA_TIMEZONE);
-    const todayInGuatemala = startOfDay(nowInGuatemala);
+    const todayInGuatemala = endOfDay(nowInGuatemala);
     
     // Convert to UTC for database comparison
     const todayUTC = zonedTimeToUtc(todayInGuatemala, GUATEMALA_TIMEZONE);
@@ -124,30 +124,157 @@ async function checkActiveToCompleted() {
 }
 
 /**
- * Starts the maintenance scheduler with cron jobs
+ * Checks for vehicle schedules that should transition from 'scheduled' to 'active'
+ * based on their start_date being today or in the past
+ */
+async function checkScheduledVehicleSchedulesToActive() {
+  try {
+    console.log(`[${new Date().toISOString()}] Checking for scheduled vehicle schedules to activate...`);
+    
+    // Get current date in Guatemala timezone
+    const nowInGuatemala = utcToZonedTime(new Date(), GUATEMALA_TIMEZONE);
+    const todayInGuatemala = startOfDay(nowInGuatemala);
+    
+    // Convert to UTC for database comparison
+    const todayUTC = zonedTimeToUtc(todayInGuatemala, GUATEMALA_TIMEZONE);
+    
+    // Query for scheduled vehicle schedules where start_date is today or in the past
+    const { data: schedulesToActivate, error } = await supabase
+      .from('vehicle_schedules')
+      .select('id, vehicle_id, driver_id, start_date')
+      .eq('status', 'scheduled')
+      .lte('start_date', todayUTC.toISOString());
+
+    if (error) {
+      console.error('Error fetching scheduled vehicle schedules:', error);
+      return;
+    }
+
+    if (!schedulesToActivate || schedulesToActivate.length === 0) {
+      console.log('No scheduled vehicle schedules to activate');
+      return;
+    }
+
+    console.log(`Found ${schedulesToActivate.length} vehicle schedules to activate`);
+
+    // Process each schedule using the RPC function
+    for (const schedule of schedulesToActivate) {
+      try {
+        const { data, error: rpcError } = await supabase.rpc('update_vehicle_schedule_and_vehicle_status', {
+          p_schedule_id: schedule.id,
+          p_new_status: 'active'
+        });
+
+        if (rpcError) {
+          console.error(`Error activating vehicle schedule ${schedule.id}:`, rpcError);
+        } else {
+          console.log(`Successfully activated vehicle schedule ${schedule.id} for vehicle ${schedule.vehicle_id} with driver ${schedule.driver_id}`);
+        }
+      } catch (scheduleError) {
+        console.error(`Failed to activate vehicle schedule ${schedule.id}:`, scheduleError);
+      }
+    }
+  } catch (error) {
+    console.error('Error in checkScheduledVehicleSchedulesToActive:', error);
+  }
+}
+
+/**
+ * Checks for vehicle schedules that should transition from 'active' to 'completed'
+ * based on their end_date being today or in the past
+ */
+async function checkActiveVehicleSchedulesToCompleted() {
+  try {
+    console.log(`[${new Date().toISOString()}] Checking for active vehicle schedules to complete...`);
+    
+    // Get current date in Guatemala timezone
+    const nowInGuatemala = utcToZonedTime(new Date(), GUATEMALA_TIMEZONE);
+    const todayInGuatemala = endOfDay(nowInGuatemala);
+    
+    // Convert to UTC for database comparison
+    const todayUTC = zonedTimeToUtc(todayInGuatemala, GUATEMALA_TIMEZONE);
+    
+    // Query for active vehicle schedules where end_date is today or in the past
+    const { data: schedulesToComplete, error } = await supabase
+      .from('vehicle_schedules')
+      .select('id, vehicle_id, driver_id, end_date')
+      .eq('status', 'active')
+      .lte('end_date', todayUTC.toISOString());
+
+    if (error) {
+      console.error('Error fetching active vehicle schedules:', error);
+      return;
+    }
+
+    if (!schedulesToComplete || schedulesToComplete.length === 0) {
+      console.log('No active vehicle schedules to complete');
+      return;
+    }
+
+    console.log(`Found ${schedulesToComplete.length} vehicle schedules to complete`);
+
+    // Process each schedule using the RPC function
+    for (const schedule of schedulesToComplete) {
+      try {
+        const { data, error: rpcError } = await supabase.rpc('update_vehicle_schedule_and_vehicle_status', {
+          p_schedule_id: schedule.id,
+          p_new_status: 'completed'
+        });
+
+        if (rpcError) {
+          console.error(`Error completing vehicle schedule ${schedule.id}:`, rpcError);
+        } else {
+          console.log(`Successfully completed vehicle schedule ${schedule.id} for vehicle ${schedule.vehicle_id}`);
+        }
+      } catch (scheduleError) {
+        console.error(`Failed to complete vehicle schedule ${schedule.id}:`, scheduleError);
+      }
+    }
+  } catch (error) {
+    console.error('Error in checkActiveVehicleSchedulesToCompleted:', error);
+  }
+}
+
+/**
+ * Starts the maintenance and vehicle schedule scheduler with cron jobs
  */
 export function startMaintenanceScheduler() {
-  console.log('Starting maintenance order scheduler...');
+  console.log('Starting maintenance order and vehicle schedule scheduler...');
   
-  // Schedule job to check for orders to activate (runs at 00:01 Guatemala time)
-  // Cron expression: minute hour day month dayOfWeek
+  // Schedule job to check for maintenance orders to activate (runs at 00:01 Guatemala time)
   cron.schedule('1 0 * * *', checkScheduledToActive, {
     scheduled: true,
     timezone: GUATEMALA_TIMEZONE
   });
   
-  // Schedule job to check for orders to complete (runs at 23:59 Guatemala time)
+  // Schedule job to check for maintenance orders to complete (runs at 23:59 Guatemala time)
   cron.schedule('59 23 * * *', checkActiveToCompleted, {
     scheduled: true,
     timezone: GUATEMALA_TIMEZONE
   });
   
-  console.log('Maintenance order scheduler started successfully');
-  console.log('- Scheduled to Active check: Daily at 00:01 Guatemala time');
-  console.log('- Active to Completed check: Daily at 23:59 Guatemala time');
+  // Schedule job to check for vehicle schedules to activate (runs at 00:01 Guatemala time)
+  cron.schedule('1 0 * * *', checkScheduledVehicleSchedulesToActive, {
+    scheduled: true,
+    timezone: GUATEMALA_TIMEZONE
+  });
+  
+  // Schedule job to check for vehicle schedules to complete (runs at 23:59 Guatemala time)
+  cron.schedule('59 23 * * *', checkActiveVehicleSchedulesToCompleted, {
+    scheduled: true,
+    timezone: GUATEMALA_TIMEZONE
+  });
+  
+  console.log('Maintenance order and vehicle schedule scheduler started successfully');
+  console.log('- Maintenance Scheduled to Active check: Daily at 00:01 Guatemala time');
+  console.log('- Maintenance Active to Completed check: Daily at 23:59 Guatemala time');
+  console.log('- Vehicle Schedule Scheduled to Active check: Daily at 00:01 Guatemala time');
+  console.log('- Vehicle Schedule Active to Completed check: Daily at 23:59 Guatemala time');
   
   // Run initial checks on startup (optional)
-  console.log('Running initial maintenance order checks...');
+  console.log('Running initial maintenance order and vehicle schedule checks...');
   checkScheduledToActive();
   checkActiveToCompleted();
+  checkScheduledVehicleSchedulesToActive();
+  checkActiveVehicleSchedulesToCompleted();
 }
