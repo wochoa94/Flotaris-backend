@@ -9,6 +9,9 @@ import vehicleRoutes from './routes/vehicleRoutes.js';
 import maintenanceOrderRoutes from './routes/maintenanceOrderRoutes.js';
 import vehicleScheduleRoutes from './routes/vehicleScheduleRoutes.js';
 
+// Import scheduler
+import { startMaintenanceScheduler } from './cronJobs/maintenanceScheduler.js';
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -28,6 +31,9 @@ app.use('/api/drivers', driverRoutes);
 app.use('/api/vehicles', vehicleRoutes);
 app.use('/api/maintenance-orders', maintenanceOrderRoutes);
 app.use('/api/vehicle-schedules', vehicleScheduleRoutes);
+
+// Start maintenance scheduler
+startMaintenanceScheduler();
 
 // Start server
 app.listen(PORT, () => {
