@@ -11,6 +11,37 @@ export const vehicleController = {
     }
   },
 
+  async getPaginatedVehicles(req, res) {
+    try {
+      const {
+        search = '',
+        status = [],
+        unassignedOnly = 'false',
+        sortBy = 'vehicleName',
+        sortOrder = 'asc',
+        page = '1',
+        limit = '10'
+      } = req.query;
+
+      // Parse query parameters
+      const filters = {
+        search: search.trim(),
+        status: Array.isArray(status) ? status : (status ? [status] : []),
+        unassignedOnly: unassignedOnly === 'true',
+        sortBy,
+        sortOrder: sortOrder.toLowerCase() === 'desc' ? 'desc' : 'asc',
+        page: Math.max(1, parseInt(page, 10) || 1),
+        limit: Math.min(100, Math.max(1, parseInt(limit, 10) || 10))
+      };
+
+      const result = await vehicleService.getPaginatedVehicles(filters);
+      res.json(result);
+    } catch (error) {
+      console.error('Get paginated vehicles error:', error);
+      res.status(500).json({ error: 'Failed to fetch paginated vehicles' });
+    }
+  },
+
   async createVehicle(req, res) {
     try {
       const vehicle = await vehicleService.createVehicle(req.body);
