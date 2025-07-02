@@ -1,6 +1,35 @@
 import { driverService } from '../services/driverService.js';
 
 export const driverController = {
+  async getPaginatedDrivers(req, res) {
+    try {
+      const {
+        search = '',
+        emailSearch = '',
+        sortBy = 'name',
+        sortOrder = 'asc',
+        page = '1',
+        limit = '10'
+      } = req.query;
+
+      // Parse query parameters
+      const filters = {
+        search: search.trim(),
+        emailSearch: emailSearch.trim(),
+        sortBy,
+        sortOrder: sortOrder.toLowerCase() === 'desc' ? 'desc' : 'asc',
+        page: Math.max(1, parseInt(page, 10) || 1),
+        limit: Math.min(100, Math.max(1, parseInt(limit, 10) || 10))
+      };
+
+      const result = await driverService.getPaginatedDrivers(filters);
+      res.json(result);
+    } catch (error) {
+      console.error('Get paginated drivers error:', error);
+      res.status(500).json({ error: 'Failed to fetch paginated drivers' });
+    }
+  },
+
   async createDriver(req, res) {
     try {
       const driver = await driverService.createDriver(req.body);
