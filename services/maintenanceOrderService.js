@@ -3,6 +3,127 @@ import { convertKeysToSnakeCase, convertKeysToCamelCase } from '../utils/caseCon
 import { checkOverlap, validateDateRange, validateFutureDate } from '../utils/dateUtils.js';
 
 export const maintenanceOrderService = {
+  async getPaginatedMaintenanceOrders(filters) {
+    const {
+      search,
+      status,
+      sortBy,
+      sortOrder,
+      page,
+      limit
+    } = filters;
+
+    // Build the base query with vehicle information (LEFT JOIN)
+    let query = supabase
+      .from('maintenance_orders')
+      .select(`
+        *,
+        vehicles!maintenance_orders_vehicle_id_fkey (
+          id,
+          vehicle_name,
+          make,
+          model,
+          year,
+          license_plate,
+          mileage
+        )
+      `, { count: 'exact' });
+
+    // Apply search filter
+    if (search) {
+      const searchConditions = [
+        `order_number.ilike.%${search}%`,
+        `description.ilike.%${search}%`,
+        `location.ilike.%${search}%`,
+        `type.ilike.%${search}%`,
+        `vehicles.vehicle_name.ilike.%${search}%`,
+        `vehicles.make.ilike.%${search}%`,
+        `vehicles.model.ilike.%${search}%`
+      ];
+      query = query.or(searchConditions.join(','));
+    }
+
+    // Apply status filter
+    if (status.length > 0) {
+      query = query.in('status', status);
+    }
+
+    // Apply sorting
+    const sortMapping = {
+      orderNumber: 'order_number',
+      vehicleName: 'vehicles.vehicle_name',
+      startDate: 'start_date',
+      estimatedCompletionDate: 'estimated_completion_date',
+      cost: 'cost',
+      status: 'status',
+      urgent: 'urgent',
+      createdAt: 'created_at'
+    };
+
+    const dbSortColumn = sortMapping[sortBy] || 'order_number';
+    
+    // Handle vehicle name sorting specially since it's from joined table
+    if (sortBy === 'vehicleName') {
+      query = query.order('vehicles(vehicle_name)', { ascending: sortOrder === 'asc' });
+    } else {
+      query = query.order(dbSortColumn, { ascending: sortOrder === 'asc' });
+    }
+
+    // Apply pagination
+    const offset = (page - 1) * limit;
+    query = query.range(offset, offset + limit - 1);
+
+    // Execute query
+    const { data: maintenanceOrders, error, count } = await query;
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    // Calculate pagination metadata
+    const totalCount = count || 0;
+    const totalPages = Math.ceil(totalCount / limit);
+    const hasNextPage = page < totalPages;
+    const hasPreviousPage = page > 1;
+
+    // Convert snake_case keys to camelCase for frontend
+    const convertedOrders = convertKeysToCamelCase(maintenanceOrders || []);
+
+    // Process vehicle information for each maintenance order
+    const processedOrders = convertedOrders.map(order => {
+      let vehicle = null;
+      
+      // Check if maintenance order has an associated vehicle
+      if (order.vehicles && order.vehicles.id) {
+        const vehicleData = order.vehicles;
+        vehicle = {
+          id: vehicleData.id,
+          name: vehicleData.vehicleName,
+          make: vehicleData.make,
+          model: vehicleData.model,
+          year: vehicleData.year,
+          licensePlate: vehicleData.licensePlate,
+          mileage: vehicleData.mileage
+        };
+      }
+
+      return {
+        ...order,
+        vehicle,
+        vehicles: undefined // Remove the nested vehicles object
+      };
+    });
+
+    return {
+      maintenanceOrders: processedOrders,
+      totalCount,
+      totalPages,
+      currentPage: page,
+      hasNextPage,
+      hasPreviousPage
+    };
+  },
+
   async createMaintenanceOrder(orderData) {
     const { vehicleId, startDate, estimatedCompletionDate } = orderData;
 

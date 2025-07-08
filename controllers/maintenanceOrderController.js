@@ -1,6 +1,35 @@
 import { maintenanceOrderService } from '../services/maintenanceOrderService.js';
 
 export const maintenanceOrderController = {
+  async getPaginatedMaintenanceOrders(req, res) {
+    try {
+      const {
+        search = '',
+        status = [],
+        sortBy = 'orderNumber',
+        sortOrder = 'asc',
+        page = '1',
+        limit = '10'
+      } = req.query;
+
+      // Parse query parameters
+      const filters = {
+        search: search.trim(),
+        status: Array.isArray(status) ? status : (status ? [status] : []),
+        sortBy,
+        sortOrder: sortOrder.toLowerCase() === 'desc' ? 'desc' : 'asc',
+        page: Math.max(1, parseInt(page, 10) || 1),
+        limit: Math.min(100, Math.max(1, parseInt(limit, 10) || 10))
+      };
+
+      const result = await maintenanceOrderService.getPaginatedMaintenanceOrders(filters);
+      res.json(result);
+    } catch (error) {
+      console.error('Get paginated maintenance orders error:', error);
+      res.status(500).json({ error: 'Failed to fetch paginated maintenance orders' });
+    }
+  },
+
   async createMaintenanceOrder(req, res) {
     try {
       const order = await maintenanceOrderService.createMaintenanceOrder(req.body);
