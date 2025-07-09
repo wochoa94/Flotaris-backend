@@ -4,6 +4,7 @@ import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
 
+router.get('/paginated', authenticateToken, vehicleScheduleController.getPaginatedVehicleSchedules);
 router.post('/', authenticateToken, vehicleScheduleController.createVehicleSchedule);
 router.put('/:id', authenticateToken, vehicleScheduleController.updateVehicleSchedule);
 router.delete('/:id', authenticateToken, vehicleScheduleController.deleteVehicleSchedule);

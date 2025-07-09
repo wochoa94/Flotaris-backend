@@ -3,6 +3,144 @@ import { convertKeysToSnakeCase, convertKeysToCamelCase } from '../utils/caseCon
 import { checkOverlap, validateDateRange, validateFutureDate } from '../utils/dateUtils.js';
 
 export const vehicleScheduleService = {
+  async getPaginatedVehicleSchedules(filters) {
+    const {
+      search,
+      status,
+      sortBy,
+      sortOrder,
+      page,
+      limit
+    } = filters;
+
+    // Build the base query with vehicle and driver information (LEFT JOINs)
+    let query = supabase
+      .from('vehicle_schedules')
+      .select(`
+        *,
+        vehicles!vehicle_schedules_vehicle_id_fkey (
+          id,
+          vehicle_name,
+          make,
+          model,
+          year,
+          license_plate,
+          mileage
+        ),
+        drivers!vehicle_schedules_driver_id_fkey (
+          id,
+          first_name,
+          last_name,
+          email
+        )
+      `, { count: 'exact' });
+
+    // Apply search filter
+    if (search) {
+      const searchConditions = [
+        `vehicles.vehicle_name.ilike.%${search}%`,
+        `drivers.first_name.ilike.%${search}%`,
+        `drivers.last_name.ilike.%${search}%`,
+        `notes.ilike.%${search}%`
+      ];
+      query = query.or(searchConditions.join(','));
+    }
+
+    // Apply status filter
+    if (status.length > 0) {
+      query = query.in('status', status);
+    }
+
+    // Apply sorting
+    const sortMapping = {
+      vehicleName: 'vehicles.vehicle_name',
+      driverName: 'drivers.first_name',
+      startDate: 'start_date',
+      endDate: 'end_date',
+      status: 'status'
+    };
+
+    const dbSortColumn = sortMapping[sortBy] || 'start_date';
+    
+    // Handle joined table sorting specially
+    if (sortBy === 'vehicleName') {
+      query = query.order('vehicles(vehicle_name)', { ascending: sortOrder === 'asc' });
+    } else if (sortBy === 'driverName') {
+      query = query.order('drivers(first_name)', { ascending: sortOrder === 'asc' });
+    } else {
+      query = query.order(dbSortColumn, { ascending: sortOrder === 'asc' });
+    }
+
+    // Apply pagination
+    const offset = (page - 1) * limit;
+    query = query.range(offset, offset + limit - 1);
+
+    // Execute query
+    const { data: vehicleSchedules, error, count } = await query;
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    // Calculate pagination metadata
+    const totalCount = count || 0;
+    const totalPages = Math.ceil(totalCount / limit);
+    const hasNextPage = page < totalPages;
+    const hasPreviousPage = page > 1;
+
+    // Convert snake_case keys to camelCase for frontend
+    const convertedSchedules = convertKeysToCamelCase(vehicleSchedules || []);
+
+    // Process vehicle and driver information for each schedule
+    const processedSchedules = convertedSchedules.map(schedule => {
+      let vehicle = null;
+      let driver = null;
+      
+      // Process vehicle information
+      if (schedule.vehicles && schedule.vehicles.id) {
+        const vehicleData = schedule.vehicles;
+        vehicle = {
+          id: vehicleData.id,
+          name: vehicleData.vehicleName,
+          make: vehicleData.make,
+          model: vehicleData.model,
+          year: vehicleData.year,
+          licensePlate: vehicleData.licensePlate,
+          mileage: vehicleData.mileage
+        };
+      }
+
+      // Process driver information
+      if (schedule.drivers && schedule.drivers.id) {
+        const driverData = schedule.drivers;
+        driver = {
+          id: driverData.id,
+          name: `${driverData.firstName} ${driverData.lastName}`,
+          firstName: driverData.firstName,
+          lastName: driverData.lastName,
+          email: driverData.email
+        };
+      }
+
+      return {
+        ...schedule,
+        vehicle,
+        driver,
+        vehicles: undefined, // Remove the nested vehicles object
+        drivers: undefined   // Remove the nested drivers object
+      };
+    });
+
+    return {
+      vehicleSchedules: processedSchedules,
+      totalCount,
+      totalPages,
+      currentPage: page,
+      hasNextPage,
+      hasPreviousPage
+    };
+  },
+
   async createVehicleSchedule(scheduleData) {
     const { vehicleId, driverId, startDate, endDate } = scheduleData;
 

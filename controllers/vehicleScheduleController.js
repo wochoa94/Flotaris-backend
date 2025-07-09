@@ -1,6 +1,35 @@
 import { vehicleScheduleService } from '../services/vehicleScheduleService.js';
 
 export const vehicleScheduleController = {
+  async getPaginatedVehicleSchedules(req, res) {
+    try {
+      const {
+        search = '',
+        status = [],
+        sortBy = 'startDate',
+        sortOrder = 'desc',
+        page = '1',
+        limit = '6'
+      } = req.query;
+
+      // Parse query parameters
+      const filters = {
+        search: search.trim(),
+        status: Array.isArray(status) ? status : (status ? [status] : []),
+        sortBy,
+        sortOrder: sortOrder.toLowerCase() === 'desc' ? 'desc' : 'asc',
+        page: Math.max(1, parseInt(page, 10) || 1),
+        limit: Math.min(100, Math.max(1, parseInt(limit, 10) || 6))
+      };
+
+      const result = await vehicleScheduleService.getPaginatedVehicleSchedules(filters);
+      res.json(result);
+    } catch (error) {
+      console.error('Get paginated vehicle schedules error:', error);
+      res.status(500).json({ error: 'Failed to fetch paginated vehicle schedules' });
+    }
+  },
+
   async createVehicleSchedule(req, res) {
     try {
       const schedule = await vehicleScheduleService.createVehicleSchedule(req.body);
