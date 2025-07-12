@@ -186,7 +186,14 @@ export const vehicleService = {
   async getVehicleById(id) {
     const { data, error } = await supabase
       .from('vehicles')
-      .select('*')
+      .select(`
+        *,
+        drivers:driver_id (
+          id,
+          name,
+          email
+        )
+      `)
       .eq('id', id)
       .single();
 
@@ -197,7 +204,25 @@ export const vehicleService = {
     }
 
     // Convert snake_case keys to camelCase for frontend
-    return convertKeysToCamelCase(data);
+    const convertedData = convertKeysToCamelCase(data);
+    
+    // Process driver information and denormalize it
+    let processedVehicle = { ...convertedData };
+    
+    if (convertedData.drivers && convertedData.drivers.id) {
+      // Driver is assigned - add denormalized driver info
+      processedVehicle.assignedDriverName = convertedData.drivers.name;
+      processedVehicle.assignedDriverEmail = convertedData.drivers.email;
+    } else {
+      // No driver assigned
+      processedVehicle.assignedDriverName = null;
+      processedVehicle.assignedDriverEmail = null;
+    }
+    
+    // Remove the nested drivers object to maintain clean response structure
+    delete processedVehicle.drivers;
+    
+    return processedVehicle;
   },
 
   async updateVehicleStatus(id, updateData) {
