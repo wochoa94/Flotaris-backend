@@ -181,25 +181,25 @@ async function checkScheduledVehicleSchedulesToActive() {
 
 /**
  * Checks for vehicle schedules that should transition from 'active' to 'completed'
- * based on their end_date being today or in the past
+ * based on their end_date being strictly in the past (before today)
  */
 async function checkActiveVehicleSchedulesToCompleted() {
   try {
-    console.log(`[${new Date().toISOString()}] Checking for active vehicle schedules to complete...`);
+    console.log(`[${new Date().toISOString()}] Checking for active vehicle schedules to complete (end_date < start of today)...`);
     
     // Get current date in Guatemala timezone
     const nowInGuatemala = utcToZonedTime(new Date(), GUATEMALA_TIMEZONE);
-    const todayInGuatemala = endOfDay(nowInGuatemala);
+    const startOfTodayInGuatemala = startOfDay(nowInGuatemala);
     
     // Convert to UTC for database comparison
-    const todayUTC = zonedTimeToUtc(todayInGuatemala, GUATEMALA_TIMEZONE);
+    const startOfTodayUTC = zonedTimeToUtc(startOfTodayInGuatemala, GUATEMALA_TIMEZONE);
     
-    // Query for active vehicle schedules where end_date is today or in the past
+    // Query for active vehicle schedules where end_date is strictly before today
     const { data: schedulesToComplete, error } = await supabase
       .from('vehicle_schedules')
       .select('id, vehicle_id, driver_id, end_date')
       .eq('status', 'active')
-      .lte('end_date', todayUTC.toISOString());
+      .lt('end_date', startOfTodayUTC.toISOString());
 
     if (error) {
       console.error('Error fetching active vehicle schedules:', error);
