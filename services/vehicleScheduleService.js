@@ -20,7 +20,7 @@ export const vehicleScheduleService = {
         *,
         vehicles!vehicle_schedules_vehicle_id_fkey (
           id,
-          vehicle_name,
+          name,
           make,
           model,
           year,
@@ -38,7 +38,7 @@ export const vehicleScheduleService = {
     // Apply search filter
     if (search) {
       const searchConditions = [
-        `vehicles.vehicle_name.ilike.%${search}%`,
+        `vehicles.name.ilike.%${search}%`,
         `drivers.first_name.ilike.%${search}%`,
         `drivers.last_name.ilike.%${search}%`,
         `notes.ilike.%${search}%`
@@ -53,7 +53,7 @@ export const vehicleScheduleService = {
 
     // Apply sorting
     const sortMapping = {
-      vehicleName: 'vehicles.vehicle_name',
+      vehicleName: 'vehicles.name',
       driverName: 'drivers.first_name',
       startDate: 'start_date',
       endDate: 'end_date',
@@ -64,7 +64,7 @@ export const vehicleScheduleService = {
     
     // Handle joined table sorting specially
     if (sortBy === 'vehicleName') {
-      query = query.order('vehicles(vehicle_name)', { ascending: sortOrder === 'asc' });
+      query = query.order('vehicles(name)', { ascending: sortOrder === 'asc' });
     } else if (sortBy === 'driverName') {
       query = query.order('drivers(first_name)', { ascending: sortOrder === 'asc' });
     } else {
@@ -101,7 +101,7 @@ export const vehicleScheduleService = {
         const vehicleData = schedule.vehicles;
         vehicle = {
           id: vehicleData.id,
-          name: vehicleData.vehicleName,
+          name: vehicleData.name,
           make: vehicleData.make,
           model: vehicleData.model,
           year: vehicleData.year,

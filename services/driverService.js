@@ -19,7 +19,7 @@ export const driverService = {
         *,
         vehicles!vehicles_driver_id_fkey (
           id,
-          vehicle_name,
+          name,
           make,
           model,
           year,
@@ -84,7 +84,7 @@ export const driverService = {
         const vehicle = driver.vehicles[0]; // Should only be one vehicle per driver
         assignedVehicle = {
           id: vehicle.id,
-          name: vehicle.vehicleName,
+          name: vehicle.name,
           make: vehicle.make,
           model: vehicle.model,
           year: vehicle.year,

@@ -36,7 +36,7 @@ export const vehicleService = {
 
     // Apply search filter
     if (search) {
-      query = query.or(`vehicle_name.ilike.%${search}%,vin.ilike.%${search}%,make.ilike.%${search}%,model.ilike.%${search}%`);
+      query = query.or(`name.ilike.%${search}%,vin.ilike.%${search}%,make.ilike.%${search}%,model.ilike.%${search}%`);
     }
 
     // Apply status filter
@@ -51,14 +51,14 @@ export const vehicleService = {
 
     // Apply sorting
     const sortMapping = {
-      vehicleName: 'vehicle_name',
+      vehicleName: 'name',
       status: 'status',
       mileage: 'mileage',
       maintenanceCost: 'maintenance_cost',
       assignedDriver: 'driver_id'
     };
 
-    const dbSortColumn = sortMapping[sortBy] || 'vehicle_name';
+    const dbSortColumn = sortMapping[sortBy] || 'name';
     
     // Special handling for driver sorting
     if (sortBy === 'assignedDriver') {
@@ -125,8 +125,15 @@ export const vehicleService = {
   },
 
   async createVehicle(vehicleData) {
+    // Manually map vehicleName to name if present, as per database schema
+    let dataForDb = { ...vehicleData };
+    if (dataForDb.vehicleName !== undefined) {
+      dataForDb.name = dataForDb.vehicleName;
+      delete dataForDb.vehicleName; // Remove the old property
+    }
+    
     // Convert camelCase keys to snake_case for database
-    const snakeCaseData = convertKeysToSnakeCase(vehicleData);
+    const snakeCaseData = convertKeysToSnakeCase(dataForDb);
     
     const { data, error } = await supabase
       .from('vehicles')
@@ -141,8 +148,15 @@ export const vehicleService = {
   },
 
   async updateVehicle(id, vehicleData) {
+    // Manually map vehicleName to name if present, as per database schema
+    let dataForDb = { ...vehicleData };
+    if (dataForDb.vehicleName !== undefined) {
+      dataForDb.name = dataForDb.vehicleName;
+      delete dataForDb.vehicleName; // Remove the old property
+    }
+    
     // Convert camelCase keys to snake_case for database
-    const snakeCaseData = convertKeysToSnakeCase(vehicleData);
+    const snakeCaseData = convertKeysToSnakeCase(dataForDb);
     
     const { data, error } = await supabase
       .from('vehicles')
@@ -188,8 +202,15 @@ export const vehicleService = {
   },
 
   async updateVehicleStatus(id, updateData) {
+    // Manually map vehicleName to name if present, as per database schema
+    let dataForDb = { ...updateData };
+    if (dataForDb.vehicleName !== undefined) {
+      dataForDb.name = dataForDb.vehicleName;
+      delete dataForDb.vehicleName; // Remove the old property
+    }
+    
     // Convert camelCase keys to snake_case for database
-    const snakeCaseData = convertKeysToSnakeCase(updateData);
+    const snakeCaseData = convertKeysToSnakeCase(dataForDb);
     
     const { data, error } = await supabase
       .from('vehicles')

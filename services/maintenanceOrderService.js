@@ -20,7 +20,7 @@ export const maintenanceOrderService = {
         *,
         vehicles!maintenance_orders_vehicle_id_fkey (
           id,
-          vehicle_name,
+          name,
           make,
           model,
           year,
@@ -36,7 +36,7 @@ export const maintenanceOrderService = {
         `description.ilike.%${search}%`,
         `location.ilike.%${search}%`,
         `type.ilike.%${search}%`,
-        `vehicles.vehicle_name.ilike.%${search}%`,
+        `vehicles.name.ilike.%${search}%`,
         `vehicles.make.ilike.%${search}%`,
         `vehicles.model.ilike.%${search}%`
       ];
@@ -51,7 +51,7 @@ export const maintenanceOrderService = {
     // Apply sorting
     const sortMapping = {
       orderNumber: 'order_number',
-      vehicleName: 'vehicles.vehicle_name',
+      vehicleName: 'vehicles.name',
       startDate: 'start_date',
       estimatedCompletionDate: 'estimated_completion_date',
       cost: 'cost',
@@ -64,7 +64,7 @@ export const maintenanceOrderService = {
     
     // Handle vehicle name sorting specially since it's from joined table
     if (sortBy === 'vehicleName') {
-      query = query.order('vehicles(vehicle_name)', { ascending: sortOrder === 'asc' });
+      query = query.order('vehicles(name)', { ascending: sortOrder === 'asc' });
     } else {
       query = query.order(dbSortColumn, { ascending: sortOrder === 'asc' });
     }
@@ -98,7 +98,7 @@ export const maintenanceOrderService = {
         const vehicleData = order.vehicles;
         vehicle = {
           id: vehicleData.id,
-          name: vehicleData.vehicleName,
+          name: vehicleData.name,
           make: vehicleData.make,
           model: vehicleData.model,
           year: vehicleData.year,
