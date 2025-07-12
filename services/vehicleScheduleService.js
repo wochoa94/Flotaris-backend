@@ -29,8 +29,7 @@ export const vehicleScheduleService = {
         ),
         drivers!vehicle_schedules_driver_id_fkey (
           id,
-          first_name,
-          last_name,
+          name,
           email
         )
       `, { count: 'exact' });
@@ -39,8 +38,7 @@ export const vehicleScheduleService = {
     if (search) {
       const searchConditions = [
         `vehicles.name.ilike.%${search}%`,
-        `drivers.first_name.ilike.%${search}%`,
-        `drivers.last_name.ilike.%${search}%`,
+        `drivers.name.ilike.%${search}%`,
         `notes.ilike.%${search}%`
       ];
       query = query.or(searchConditions.join(','));
@@ -54,7 +52,7 @@ export const vehicleScheduleService = {
     // Apply sorting
     const sortMapping = {
       vehicleName: 'vehicles.name',
-      driverName: 'drivers.first_name',
+      driverName: 'drivers.name',
       startDate: 'start_date',
       endDate: 'end_date',
       status: 'status'
@@ -66,7 +64,7 @@ export const vehicleScheduleService = {
     if (sortBy === 'vehicleName') {
       query = query.order('vehicles(name)', { ascending: sortOrder === 'asc' });
     } else if (sortBy === 'driverName') {
-      query = query.order('drivers(first_name)', { ascending: sortOrder === 'asc' });
+      query = query.order('drivers(name)', { ascending: sortOrder === 'asc' });
     } else {
       query = query.order(dbSortColumn, { ascending: sortOrder === 'asc' });
     }
@@ -115,9 +113,7 @@ export const vehicleScheduleService = {
         const driverData = schedule.drivers;
         driver = {
           id: driverData.id,
-          name: `${driverData.firstName} ${driverData.lastName}`,
-          firstName: driverData.firstName,
-          lastName: driverData.lastName,
+          name: driverData.name,
           email: driverData.email
         };
       }

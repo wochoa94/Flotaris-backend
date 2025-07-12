@@ -32,8 +32,7 @@ export const driverService = {
     const searchConditions = [];
     
     if (search) {
-      searchConditions.push(`first_name.ilike.%${search}%`);
-      searchConditions.push(`last_name.ilike.%${search}%`);
+      searchConditions.push(`name.ilike.%${search}%`);
     }
     
     if (emailSearch) {
@@ -46,13 +45,13 @@ export const driverService = {
 
     // Apply sorting
     const sortMapping = {
-      name: 'first_name',
+      name: 'name',
       email: 'email',
       idNumber: 'id_number',
       createdAt: 'created_at'
     };
 
-    const dbSortColumn = sortMapping[sortBy] || 'first_name';
+    const dbSortColumn = sortMapping[sortBy] || 'name';
     query = query.order(dbSortColumn, { ascending: sortOrder === 'asc' });
 
     // Apply pagination
