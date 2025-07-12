@@ -28,8 +28,7 @@ export const vehicleService = {
         *,
         drivers:driver_id (
           id,
-          first_name,
-          last_name,
+          name,
           email
         )
       `, { count: 'exact' });
@@ -99,7 +98,7 @@ export const vehicleService = {
         const driver = vehicle.drivers;
         return {
           ...vehicle,
-          assignedDriverName: `${driver.firstName} ${driver.lastName}`,
+          assignedDriverName: driver.name,
           assignedDriverEmail: driver.email,
           drivers: undefined // Remove the nested drivers object
         };
