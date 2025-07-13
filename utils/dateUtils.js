@@ -1,4 +1,8 @@
 import { startOfDay, endOfDay } from 'date-fns';
+import { zonedTimeToUtc } from 'date-fns-tz';
+
+// Guatemala timezone constant for consistent date handling
+export const GUATEMALA_TIMEZONE = 'America/Guatemala';
 
 /**
  * Checks if two date intervals overlap

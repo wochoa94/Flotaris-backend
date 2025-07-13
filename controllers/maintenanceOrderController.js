@@ -6,6 +6,8 @@ export const maintenanceOrderController = {
       const {
         search = '',
         status = [],
+        startDate,
+        endDate,
         sortBy = 'orderNumber',
         sortOrder = 'asc',
         page = '1',
@@ -16,6 +18,8 @@ export const maintenanceOrderController = {
       const filters = {
         search: search.trim(),
         status: Array.isArray(status) ? status : (status ? [status] : []),
+        startDate: startDate || null,
+        endDate: endDate || null,
         sortBy,
         sortOrder: sortOrder.toLowerCase() === 'desc' ? 'desc' : 'asc',
         page: Math.max(1, parseInt(page, 10) || 1),

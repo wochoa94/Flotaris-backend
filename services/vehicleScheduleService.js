@@ -1,12 +1,16 @@
 import { supabase } from '../config/supabase.js';
 import { convertKeysToSnakeCase, convertKeysToCamelCase } from '../utils/caseConverter.js';
-import { checkOverlap, validateDateRange, validateFutureDate } from '../utils/dateUtils.js';
+import { checkOverlap, validateDateRange, validateFutureDate, GUATEMALA_TIMEZONE } from '../utils/dateUtils.js';
+import { startOfDay, endOfDay } from 'date-fns';
+import { zonedTimeToUtc } from 'date-fns-tz';
 
 export const vehicleScheduleService = {
   async getPaginatedVehicleSchedules(filters) {
     const {
       search,
       status,
+      startDate,
+      endDate,
       sortBy,
       sortOrder,
       page,
@@ -47,6 +51,21 @@ export const vehicleScheduleService = {
     // Apply status filter
     if (status.length > 0) {
       query = query.in('status', status);
+    }
+
+    // Apply date range filter if provided
+    if (startDate && endDate) {
+      // Parse dates in Guatemala timezone and convert to UTC for database comparison
+      const startDateInGuatemala = startOfDay(new Date(startDate));
+      const endDateInGuatemala = endOfDay(new Date(endDate));
+      
+      const parsedStartDate = zonedTimeToUtc(startDateInGuatemala, GUATEMALA_TIMEZONE).toISOString();
+      const parsedEndDate = zonedTimeToUtc(endDateInGuatemala, GUATEMALA_TIMEZONE).toISOString();
+      
+      // Apply overlap condition: schedule overlaps with requested range if:
+      // schedule.start_date <= requestedEndDate AND schedule.end_date >= requestedStartDate
+      query = query.lte('start_date', parsedEndDate);
+      query = query.gte('end_date', parsedStartDate);
     }
 
     // Apply sorting
