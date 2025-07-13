@@ -66,25 +66,25 @@ async function checkScheduledToActive() {
 
 /**
  * Checks for maintenance orders that should transition from 'active' to 'completed'
- * based on their estimated_completion_date being today or in the past
+ * based on their estimated_completion_date being strictly in the past (before today)
  */
 async function checkActiveToCompleted() {
   try {
-    console.log(`[${new Date().toISOString()}] Checking for active maintenance orders to complete...`);
+    console.log(`[${new Date().toISOString()}] Checking for active maintenance orders to complete (estimated_completion_date < start of today)...`);
     
     // Get current date in Guatemala timezone
     const nowInGuatemala = utcToZonedTime(new Date(), GUATEMALA_TIMEZONE);
-    const todayInGuatemala = endOfDay(nowInGuatemala);
+    const startOfTodayInGuatemala = startOfDay(nowInGuatemala);
     
     // Convert to UTC for database comparison
-    const todayUTC = zonedTimeToUtc(todayInGuatemala, GUATEMALA_TIMEZONE);
+    const startOfTodayUTC = zonedTimeToUtc(startOfTodayInGuatemala, GUATEMALA_TIMEZONE);
     
-    // Query for active maintenance orders where estimated_completion_date is today or in the past
+    // Query for active maintenance orders where estimated_completion_date is strictly before today
     const { data: ordersToComplete, error } = await supabase
       .from('maintenance_orders')
       .select('id, vehicle_id, estimated_completion_date')
       .eq('status', 'active')
-      .lte('estimated_completion_date', todayUTC.toISOString());
+      .lt('estimated_completion_date', startOfTodayUTC.toISOString());
 
     if (error) {
       console.error('Error fetching active maintenance orders:', error);
