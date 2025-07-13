@@ -131,6 +131,12 @@ export const vehicleService = {
       delete dataForDb.vehicleName; // Remove the old property
     }
     
+    // Manually map assignedDriverId to driverId if present, as per database schema
+    if (dataForDb.assignedDriverId !== undefined) {
+      dataForDb.driverId = dataForDb.assignedDriverId;
+      delete dataForDb.assignedDriverId; // Remove the old property
+    }
+    
     // Convert camelCase keys to snake_case for database
     const snakeCaseData = convertKeysToSnakeCase(dataForDb);
     
@@ -152,6 +158,12 @@ export const vehicleService = {
     if (dataForDb.vehicleName !== undefined) {
       dataForDb.name = dataForDb.vehicleName;
       delete dataForDb.vehicleName; // Remove the old property
+    }
+    
+    // Manually map assignedDriverId to driverId if present, as per database schema
+    if (dataForDb.assignedDriverId !== undefined) {
+      dataForDb.driverId = dataForDb.assignedDriverId;
+      delete dataForDb.assignedDriverId; // Remove the old property
     }
     
     // Convert camelCase keys to snake_case for database
@@ -231,6 +243,12 @@ export const vehicleService = {
     if (dataForDb.vehicleName !== undefined) {
       dataForDb.name = dataForDb.vehicleName;
       delete dataForDb.vehicleName; // Remove the old property
+    }
+    
+    // Manually map assignedDriverId to driverId if present, as per database schema
+    if (dataForDb.assignedDriverId !== undefined) {
+      dataForDb.driverId = dataForDb.assignedDriverId;
+      delete dataForDb.assignedDriverId; // Remove the old property
     }
     
     // Convert camelCase keys to snake_case for database
