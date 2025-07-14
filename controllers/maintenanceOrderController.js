@@ -5,10 +5,10 @@ export const maintenanceOrderController = {
     try {
       const {
         search = '',
-        status = [],
+        status = ['active', 'scheduled', 'pending_authorization'],
         startDate,
         endDate,
-        sortBy = 'orderNumber',
+        sortBy = 'startDate',
         sortOrder = 'asc',
         page = '1',
         limit = '10'
