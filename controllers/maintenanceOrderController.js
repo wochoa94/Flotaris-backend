@@ -127,5 +127,15 @@ export const maintenanceOrderController = {
       console.error('Get maintenance orders by vehicle error:', error);
       res.status(500).json({ error: 'Failed to fetch maintenance orders' });
     }
+  },
+
+  async getMaintenanceOrderSummary(req, res) {
+    try {
+      const summary = await maintenanceOrderService.getMaintenanceOrderSummary();
+      res.json(summary);
+    } catch (error) {
+      console.error('Get maintenance order summary error:', error);
+      res.status(500).json({ error: 'Failed to fetch maintenance order summary' });
+    }
   }
 };

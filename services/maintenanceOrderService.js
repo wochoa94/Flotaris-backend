@@ -344,4 +344,40 @@ export const maintenanceOrderService = {
     // Convert snake_case keys to camelCase for frontend
     return convertKeysToCamelCase(data || []);
   }
+
+  async getMaintenanceOrderSummary() {
+    // Fetch all maintenance orders with status and cost
+    const { data, error } = await supabase
+      .from('maintenance_orders')
+      .select('status, cost');
+
+    if (error) throw new Error(error.message);
+
+    // Initialize counters and sum
+    const summary = {
+      active: 0,
+      scheduled: 0,
+      pending_authorization: 0,
+      totalCompletedCost: 0
+    };
+
+    // Process each maintenance order
+    (data || []).forEach(order => {
+      const { status, cost } = order;
+
+      // Count orders by status
+      if (status === 'active') {
+        summary.active++;
+      } else if (status === 'scheduled') {
+        summary.scheduled++;
+      } else if (status === 'pending_authorization') {
+        summary.pending_authorization++;
+      } else if (status === 'completed') {
+        // Add cost to total for completed orders (treat null/undefined as 0)
+        summary.totalCompletedCost += cost || 0;
+      }
+    });
+
+    return summary;
+  }
 };
