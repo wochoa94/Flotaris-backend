@@ -343,7 +343,7 @@ export const maintenanceOrderService = {
     
     // Convert snake_case keys to camelCase for frontend
     return convertKeysToCamelCase(data || []);
-  }
+  },
 
   async getMaintenanceOrderSummary() {
     // Fetch all maintenance orders with status and cost
