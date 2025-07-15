@@ -410,5 +410,34 @@ export const vehicleScheduleService = {
     
     // Convert snake_case keys to camelCase for frontend
     return convertKeysToCamelCase(data || []);
+  },
+
+  async getVehicleScheduleSummary() {
+    // Fetch all vehicle schedules with status
+    const { data, error } = await supabase
+      .from('vehicle_schedules')
+      .select('status');
+
+    if (error) throw new Error(error.message);
+
+    // Initialize counters
+    const summary = {
+      active: 0,
+      scheduled: 0
+    };
+
+    // Process each vehicle schedule
+    (data || []).forEach(schedule => {
+      const { status } = schedule;
+
+      // Count schedules by status
+      if (status === 'active') {
+        summary.active++;
+      } else if (status === 'scheduled') {
+        summary.scheduled++;
+      }
+    });
+
+    return summary;
   }
 };

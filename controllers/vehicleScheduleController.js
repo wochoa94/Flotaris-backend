@@ -129,5 +129,15 @@ export const vehicleScheduleController = {
       console.error('Get other vehicle schedules error:', error);
       res.status(500).json({ error: 'Failed to fetch vehicle schedules' });
     }
+  },
+
+  async getVehicleScheduleSummary(req, res) {
+    try {
+      const summary = await vehicleScheduleService.getVehicleScheduleSummary();
+      res.json(summary);
+    } catch (error) {
+      console.error('Get vehicle schedule summary error:', error);
+      res.status(500).json({ error: 'Failed to fetch vehicle schedule summary' });
+    }
   }
 };
