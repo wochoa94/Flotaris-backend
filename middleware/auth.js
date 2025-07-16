@@ -1,10 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
-
-// Supabase client
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+import { supabase } from '../config/supabase.js';
 
 // Authentication middleware
 export const authenticateToken = async (req, res, next) => {
