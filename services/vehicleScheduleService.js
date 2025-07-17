@@ -1,6 +1,7 @@
 import { supabaseAdmin } from '../config/supabase.js';
 import { convertKeysToSnakeCase, convertKeysToCamelCase } from '../utils/caseConverter.js';
 import { checkOverlap, validateDateRange, validateFutureDate, GUATEMALA_TIMEZONE } from '../utils/dateUtils.js';
+import { vehicleService } from './vehicleService.js';
 import { startOfDay, endOfDay } from 'date-fns';
 import { zonedTimeToUtc } from 'date-fns-tz';
 
