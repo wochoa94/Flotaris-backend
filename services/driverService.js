@@ -1,4 +1,4 @@
-import { supabase } from '../config/supabase.js';
+import { supabaseAdmin } from '../config/supabase.js';
 import { convertKeysToSnakeCase, convertKeysToCamelCase } from '../utils/caseConverter.js';
 
 export const driverService = {
@@ -13,7 +13,7 @@ export const driverService = {
     } = filters;
 
     // Build the base query with vehicle information (LEFT JOIN)
-    let query = supabase
+    let query = supabaseAdmin
       .from('drivers')
       .select(`
         *,
@@ -113,7 +113,7 @@ export const driverService = {
     // Convert camelCase keys to snake_case for database
     const snakeCaseData = convertKeysToSnakeCase(driverData);
     
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('drivers')
       .insert(snakeCaseData)
       .select()
@@ -129,7 +129,7 @@ export const driverService = {
     // Convert camelCase keys to snake_case for database
     const snakeCaseData = convertKeysToSnakeCase(driverData);
     
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('drivers')
       .update(snakeCaseData)
       .eq('id', id)
@@ -147,7 +147,7 @@ export const driverService = {
   },
 
   async deleteDriver(id) {
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('drivers')
       .delete()
       .eq('id', id);
@@ -156,7 +156,7 @@ export const driverService = {
   },
 
   async checkEmailUniqueness(email) {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('drivers')
       .select('id')
       .eq('email', email)

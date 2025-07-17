@@ -1,7 +1,7 @@
 import cron from 'node-cron';
 import { zonedTimeToUtc, utcToZonedTime } from 'date-fns-tz';
 import { format, startOfDay, endOfDay } from 'date-fns';
-import { supabase } from '../config/supabase.js';
+import { supabaseAdmin } from '../config/supabase.js';
 
 const GUATEMALA_TIMEZONE = 'America/Guatemala';
 
@@ -21,7 +21,7 @@ async function checkScheduledToActive() {
     const todayUTC = zonedTimeToUtc(todayInGuatemala, GUATEMALA_TIMEZONE);
     
     // Query for scheduled maintenance orders where start_date is today or in the past
-    const { data: ordersToActivate, error } = await supabase
+    const { data: ordersToActivate, error } = await supabaseAdmin
       .from('maintenance_orders')
       .select('id, vehicle_id, start_date')
       .eq('status', 'scheduled')
@@ -42,7 +42,7 @@ async function checkScheduledToActive() {
     // Process each order using the RPC function
     for (const order of ordersToActivate) {
       try {
-        const { data, error: rpcError } = await supabase.rpc('update_maintenance_order_and_vehicle_status', {
+        const { data, error: rpcError } = await supabaseAdmin.rpc('update_maintenance_order_and_vehicle_status', {
           p_order_id: order.id,
           p_new_status: 'active',
           p_cost: null,
@@ -80,7 +80,7 @@ async function checkActiveToCompleted() {
     const startOfTodayUTC = zonedTimeToUtc(startOfTodayInGuatemala, GUATEMALA_TIMEZONE);
     
     // Query for active maintenance orders where estimated_completion_date is strictly before today
-    const { data: ordersToComplete, error } = await supabase
+    const { data: ordersToComplete, error } = await supabaseAdmin
       .from('maintenance_orders')
       .select('id, vehicle_id, estimated_completion_date')
       .eq('status', 'active')
@@ -101,7 +101,7 @@ async function checkActiveToCompleted() {
     // Process each order using the RPC function
     for (const order of ordersToComplete) {
       try {
-        const { data, error: rpcError } = await supabase.rpc('update_maintenance_order_and_vehicle_status', {
+        const { data, error: rpcError } = await supabaseAdmin.rpc('update_maintenance_order_and_vehicle_status', {
           p_order_id: order.id,
           p_new_status: 'completed',
           p_cost: null,
@@ -139,7 +139,7 @@ async function checkScheduledVehicleSchedulesToActive() {
     const todayUTC = zonedTimeToUtc(todayInGuatemala, GUATEMALA_TIMEZONE);
     
     // Query for scheduled vehicle schedules where start_date is today or in the past
-    const { data: schedulesToActivate, error } = await supabase
+    const { data: schedulesToActivate, error } = await supabaseAdmin
       .from('vehicle_schedules')
       .select('id, vehicle_id, driver_id, start_date')
       .eq('status', 'scheduled')
@@ -160,7 +160,7 @@ async function checkScheduledVehicleSchedulesToActive() {
     // Process each schedule using the RPC function
     for (const schedule of schedulesToActivate) {
       try {
-        const { data, error: rpcError } = await supabase.rpc('update_vehicle_schedule_and_vehicle_status', {
+        const { data, error: rpcError } = await supabaseAdmin.rpc('update_vehicle_schedule_and_vehicle_status', {
           p_schedule_id: schedule.id,
           p_new_status: 'active'
         });
@@ -195,7 +195,7 @@ async function checkActiveVehicleSchedulesToCompleted() {
     const startOfTodayUTC = zonedTimeToUtc(startOfTodayInGuatemala, GUATEMALA_TIMEZONE);
     
     // Query for active vehicle schedules where end_date is strictly before today
-    const { data: schedulesToComplete, error } = await supabase
+    const { data: schedulesToComplete, error } = await supabaseAdmin
       .from('vehicle_schedules')
       .select('id, vehicle_id, driver_id, end_date')
       .eq('status', 'active')
@@ -216,7 +216,7 @@ async function checkActiveVehicleSchedulesToCompleted() {
     // Process each schedule using the RPC function
     for (const schedule of schedulesToComplete) {
       try {
-        const { data, error: rpcError } = await supabase.rpc('update_vehicle_schedule_and_vehicle_status', {
+        const { data, error: rpcError } = await supabaseAdmin.rpc('update_vehicle_schedule_and_vehicle_status', {
           p_schedule_id: schedule.id,
           p_new_status: 'completed'
         });

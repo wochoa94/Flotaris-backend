@@ -1,4 +1,4 @@
-import { supabase } from '../config/supabase.js';
+import { supabaseAdmin } from '../config/supabase.js';
 import { convertKeysToSnakeCase, convertKeysToCamelCase } from '../utils/caseConverter.js';
 import { checkOverlap, validateDateRange, validateFutureDate, GUATEMALA_TIMEZONE } from '../utils/dateUtils.js';
 import { startOfDay, endOfDay } from 'date-fns';
@@ -18,7 +18,7 @@ export const maintenanceOrderService = {
     } = filters;
 
     // Build the base query with vehicle information (LEFT JOIN)
-    let query = supabase
+    let query = supabaseAdmin
       .from('maintenance_orders')
       .select(`
         *,
@@ -154,7 +154,7 @@ export const maintenanceOrderService = {
     const newOrderEnd = new Date(estimatedCompletionDate);
 
     // 1. Check for maintenance order overlaps for the same vehicle
-    const { data: existingMaintenanceOrders, error: maintenanceError } = await supabase
+    const { data: existingMaintenanceOrders, error: maintenanceError } = await supabaseAdmin
       .from('maintenance_orders')
       .select('*')
       .eq('vehicle_id', vehicleId)
@@ -176,7 +176,7 @@ export const maintenanceOrderService = {
     }
 
     // 2. Check for vehicle schedule overlaps
-    const { data: existingVehicleSchedules, error: vehicleScheduleError } = await supabase
+    const { data: existingVehicleSchedules, error: vehicleScheduleError } = await supabaseAdmin
       .from('vehicle_schedules')
       .select('*')
       .eq('vehicle_id', vehicleId)
@@ -200,7 +200,7 @@ export const maintenanceOrderService = {
     // If no overlaps, proceed with creation
     const snakeCaseData = convertKeysToSnakeCase(orderData);
     
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('maintenance_orders')
       .insert(snakeCaseData)
       .select()
@@ -223,7 +223,7 @@ export const maintenanceOrderService = {
       const newOrderEnd = new Date(estimatedCompletionDate);
 
       // 1. Check for maintenance order overlaps (excluding current order)
-      const { data: existingMaintenanceOrders, error: maintenanceError } = await supabase
+      const { data: existingMaintenanceOrders, error: maintenanceError } = await supabaseAdmin
         .from('maintenance_orders')
         .select('*')
         .eq('vehicle_id', vehicleId)
@@ -246,7 +246,7 @@ export const maintenanceOrderService = {
       }
 
       // 2. Check for vehicle schedule overlaps
-      const { data: existingVehicleSchedules, error: vehicleScheduleError } = await supabase
+      const { data: existingVehicleSchedules, error: vehicleScheduleError } = await supabaseAdmin
         .from('vehicle_schedules')
         .select('*')
         .eq('vehicle_id', vehicleId)
@@ -271,7 +271,7 @@ export const maintenanceOrderService = {
     // Convert camelCase keys to snake_case for database
     const snakeCaseData = convertKeysToSnakeCase(orderData);
     
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('maintenance_orders')
       .update(snakeCaseData)
       .eq('id', id)
@@ -289,7 +289,7 @@ export const maintenanceOrderService = {
   },
 
   async deleteMaintenanceOrder(id) {
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('maintenance_orders')
       .delete()
       .eq('id', id);
@@ -302,7 +302,7 @@ export const maintenanceOrderService = {
     const { status, cost, quotationDetails, comments } = statusData;
 
     // Call the PostgreSQL RPC function for atomic updates
-    const { data, error } = await supabase.rpc('update_maintenance_order_and_vehicle_status', {
+    const { data, error } = await supabaseAdmin.rpc('update_maintenance_order_and_vehicle_status', {
       p_order_id: id,
       p_new_status: status,
       p_cost: cost || null,
@@ -328,7 +328,7 @@ export const maintenanceOrderService = {
   },
 
   async getMaintenanceOrdersByVehicle(vehicleId, statuses = []) {
-    let query = supabase
+    let query = supabaseAdmin
       .from('maintenance_orders')
       .select('*')
       .eq('vehicle_id', vehicleId);
@@ -347,7 +347,7 @@ export const maintenanceOrderService = {
 
   async getMaintenanceOrderSummary() {
     // Fetch all maintenance orders with status and cost
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('maintenance_orders')
       .select('status, cost');
 

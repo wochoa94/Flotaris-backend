@@ -1,9 +1,9 @@
-import { supabase } from '../config/supabase.js';
+import { supabaseAdmin } from '../config/supabase.js';
 import { convertKeysToSnakeCase, convertKeysToCamelCase } from '../utils/caseConverter.js';
 
 export const vehicleService = {
   async getAllVehicles() {
-    const { data, error } = await supabase.from('vehicles').select('*');
+    const { data, error } = await supabaseAdmin.from('vehicles').select('*');
     if (error) throw new Error(error.message);
     
     // Convert snake_case keys to camelCase for frontend
@@ -22,7 +22,7 @@ export const vehicleService = {
     } = filters;
 
     // Build the base query with driver information
-    let query = supabase
+    let query = supabaseAdmin
       .from('vehicles')
       .select(`
         *,
@@ -142,7 +142,7 @@ export const vehicleService = {
     // Convert camelCase keys to snake_case for database
     const snakeCaseData = convertKeysToSnakeCase(dataForDb);
     
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('vehicles')
       .insert(snakeCaseData)
       .select()
@@ -172,7 +172,7 @@ export const vehicleService = {
     // Convert camelCase keys to snake_case for database
     const snakeCaseData = convertKeysToSnakeCase(dataForDb);
     
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('vehicles')
       .update(snakeCaseData)
       .eq('id', id)
@@ -190,7 +190,7 @@ export const vehicleService = {
   },
 
   async deleteVehicle(id) {
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('vehicles')
       .delete()
       .eq('id', id);
@@ -199,7 +199,7 @@ export const vehicleService = {
   },
 
   async getVehicleById(id) {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('vehicles')
       .select(`
         *,
@@ -259,7 +259,7 @@ export const vehicleService = {
     // Convert camelCase keys to snake_case for database
     const snakeCaseData = convertKeysToSnakeCase(dataForDb);
     
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('vehicles')
       .update(snakeCaseData)
       .eq('id', id)

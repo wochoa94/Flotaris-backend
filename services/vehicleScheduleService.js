@@ -1,4 +1,4 @@
-import { supabase } from '../config/supabase.js';
+import { supabaseAdmin } from '../config/supabase.js';
 import { convertKeysToSnakeCase, convertKeysToCamelCase } from '../utils/caseConverter.js';
 import { checkOverlap, validateDateRange, validateFutureDate, GUATEMALA_TIMEZONE } from '../utils/dateUtils.js';
 import { startOfDay, endOfDay } from 'date-fns';
@@ -18,7 +18,7 @@ export const vehicleScheduleService = {
     } = filters;
 
     // Build the base query with vehicle and driver information (LEFT JOINs)
-    let query = supabase
+    let query = supabaseAdmin
       .from('vehicle_schedules')
       .select(`
         *,
@@ -167,7 +167,7 @@ export const vehicleScheduleService = {
     const newScheduleEnd = new Date(endDate);
 
     // 1. Check for vehicle schedule overlaps
-    const { data: existingVehicleSchedules, error: vehicleScheduleError } = await supabase
+    const { data: existingVehicleSchedules, error: vehicleScheduleError } = await supabaseAdmin
       .from('vehicle_schedules')
       .select('*')
       .eq('vehicle_id', vehicleId)
@@ -189,7 +189,7 @@ export const vehicleScheduleService = {
     }
 
     // 2. Check for maintenance order overlaps for the vehicle
-    const { data: existingMaintenanceOrders, error: maintenanceError } = await supabase
+    const { data: existingMaintenanceOrders, error: maintenanceError } = await supabaseAdmin
       .from('maintenance_orders')
       .select('*')
       .eq('vehicle_id', vehicleId)
@@ -212,7 +212,7 @@ export const vehicleScheduleService = {
 
     // 3. Check for driver schedule overlaps (if driver is assigned)
     if (driverId) {
-      const { data: existingDriverSchedules, error: driverScheduleError } = await supabase
+      const { data: existingDriverSchedules, error: driverScheduleError } = await supabaseAdmin
         .from('vehicle_schedules')
         .select('*')
         .eq('driver_id', driverId)
@@ -237,7 +237,7 @@ export const vehicleScheduleService = {
     // If no overlaps, proceed with creation
     const snakeCaseData = convertKeysToSnakeCase(scheduleData);
     
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('vehicle_schedules')
       .insert(snakeCaseData)
       .select()
@@ -260,7 +260,7 @@ export const vehicleScheduleService = {
       const newScheduleEnd = new Date(endDate);
 
       // 1. Check for vehicle schedule overlaps (excluding current schedule)
-      const { data: existingVehicleSchedules, error: vehicleScheduleError } = await supabase
+      const { data: existingVehicleSchedules, error: vehicleScheduleError } = await supabaseAdmin
         .from('vehicle_schedules')
         .select('*')
         .eq('vehicle_id', vehicleId)
@@ -283,7 +283,7 @@ export const vehicleScheduleService = {
       }
 
       // 2. Check for maintenance order overlaps for the vehicle
-      const { data: existingMaintenanceOrders, error: maintenanceError } = await supabase
+      const { data: existingMaintenanceOrders, error: maintenanceError } = await supabaseAdmin
         .from('maintenance_orders')
         .select('*')
         .eq('vehicle_id', vehicleId)
@@ -306,7 +306,7 @@ export const vehicleScheduleService = {
 
       // 3. Check for driver schedule overlaps (if driver is assigned)
       if (driverId) {
-        const { data: existingDriverSchedules, error: driverScheduleError } = await supabase
+        const { data: existingDriverSchedules, error: driverScheduleError } = await supabaseAdmin
           .from('vehicle_schedules')
           .select('*')
           .eq('driver_id', driverId)
@@ -333,7 +333,7 @@ export const vehicleScheduleService = {
     // Convert camelCase keys to snake_case for database
     const snakeCaseData = convertKeysToSnakeCase(scheduleData);
     
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('vehicle_schedules')
       .update(snakeCaseData)
       .eq('id', id)
@@ -351,7 +351,7 @@ export const vehicleScheduleService = {
   },
 
   async deleteVehicleSchedule(id) {
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('vehicle_schedules')
       .delete()
       .eq('id', id);
@@ -360,7 +360,7 @@ export const vehicleScheduleService = {
   },
 
   async updateVehicleScheduleStatus(id, status) {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('vehicle_schedules')
       .update({ status })
       .eq('id', id)
@@ -378,7 +378,7 @@ export const vehicleScheduleService = {
   },
 
   async getActiveSchedulesForVehicle(vehicleId) {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('vehicle_schedules')
       .select('*')
       .eq('vehicle_id', vehicleId)
@@ -391,7 +391,7 @@ export const vehicleScheduleService = {
   },
 
   async getOtherSchedulesForVehicle(vehicleId, excludeId, statuses = []) {
-    let query = supabase
+    let query = supabaseAdmin
       .from('vehicle_schedules')
       .select('*')
       .eq('vehicle_id', vehicleId);
@@ -414,7 +414,7 @@ export const vehicleScheduleService = {
 
   async getVehicleScheduleSummary() {
     // Fetch all vehicle schedules with status
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('vehicle_schedules')
       .select('status');
 

@@ -1,8 +1,8 @@
-import { supabase } from '../config/supabase.js';
+import { supabaseAuth } from '../config/supabase.js';
 
 export const authService = {
   async signInWithPassword(email, password) {
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabaseAuth.auth.signInWithPassword({
       email,
       password
     });
@@ -21,7 +21,7 @@ export const authService = {
   },
 
   async signOut() {
-    const { error } = await supabase.auth.signOut();
+    const { error } = await supabaseAuth.auth.signOut();
     
     if (error) {
       throw new Error(error.message);
@@ -31,7 +31,7 @@ export const authService = {
   },
 
   async getUser(token) {
-    const { data: { user }, error } = await supabase.auth.getUser(token);
+    const { data: { user }, error } = await supabaseAuth.auth.getUser(token);
     
     if (error || !user) {
       throw new Error('Invalid or expired token');

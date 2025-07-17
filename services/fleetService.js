@@ -1,13 +1,13 @@
-import { supabase } from '../config/supabase.js';
+import { supabaseAdmin } from '../config/supabase.js';
 import { convertKeysToCamelCase } from '../utils/caseConverter.js';
 
 export const fleetService = {
   async getAllFleetData() {
     const [vehiclesResult, driversResult, maintenanceOrdersResult, vehicleSchedulesResult] = await Promise.all([
-      supabase.from('vehicles').select('*'),
-      supabase.from('drivers').select('*'),
-      supabase.from('maintenance_orders').select('*'),
-      supabase.from('vehicle_schedules').select('*')
+      supabaseAdmin.from('vehicles').select('*'),
+      supabaseAdmin.from('drivers').select('*'),
+      supabaseAdmin.from('maintenance_orders').select('*'),
+      supabaseAdmin.from('vehicle_schedules').select('*')
     ]);
 
     if (vehiclesResult.error) throw new Error(vehiclesResult.error.message);

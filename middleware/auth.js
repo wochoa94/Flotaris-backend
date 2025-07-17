@@ -1,4 +1,4 @@
-import { supabase } from '../config/supabase.js';
+import { supabaseAuth } from '../config/supabase.js';
 
 // Authentication middleware
 export const authenticateToken = async (req, res, next) => {
@@ -10,7 +10,7 @@ export const authenticateToken = async (req, res, next) => {
   }
 
   try {
-    const { data: { user }, error } = await supabase.auth.getUser(token);
+    const { data: { user }, error } = await supabaseAuth.auth.getUser(token);
     
     if (error || !user) {
       return res.status(401).json({ error: 'Invalid or expired token' });
