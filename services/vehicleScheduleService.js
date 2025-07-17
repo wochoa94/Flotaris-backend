@@ -351,12 +351,74 @@ export const vehicleScheduleService = {
   },
 
   async deleteVehicleSchedule(id) {
+    // First, get the vehicle schedule details before deletion
+    const { data: scheduleToDelete, error: fetchError } = await supabaseAdmin
+      .from('vehicle_schedules')
+      .select('vehicle_id, driver_id')
+      .eq('id', id)
+      .single();
+
+    if (fetchError) throw new Error(fetchError.message);
+    
+    if (!scheduleToDelete) {
+      throw new Error('Vehicle schedule not found');
+    }
+
+    const { vehicle_id: vehicleId, driver_id: driverId } = scheduleToDelete;
+
+    // Delete the vehicle schedule
     const { error } = await supabaseAdmin
       .from('vehicle_schedules')
       .delete()
       .eq('id', id);
 
     if (error) throw new Error(error.message);
+
+    // After deletion, determine the new vehicle state
+    // 1. Check for active maintenance orders for this vehicle
+    const { data: activeMaintenanceOrders, error: maintenanceError } = await supabaseAdmin
+      .from('maintenance_orders')
+      .select('id')
+      .eq('vehicle_id', vehicleId)
+      .eq('status', 'active')
+      .limit(1);
+
+    if (maintenanceError) throw new Error(maintenanceError.message);
+
+    if (activeMaintenanceOrders && activeMaintenanceOrders.length > 0) {
+      // Vehicle has active maintenance orders - set to maintenance status with no driver
+      await vehicleService.updateVehicleStatus(vehicleId, {
+        status: 'maintenance',
+        driver_id: null
+      });
+      return;
+    }
+
+    // 2. Check for other active vehicle schedules for this vehicle
+    const { data: otherActiveSchedules, error: scheduleError } = await supabaseAdmin
+      .from('vehicle_schedules')
+      .select('driver_id, start_date')
+      .eq('vehicle_id', vehicleId)
+      .eq('status', 'active')
+      .order('start_date', { ascending: true });
+
+    if (scheduleError) throw new Error(scheduleError.message);
+
+    if (otherActiveSchedules && otherActiveSchedules.length > 0) {
+      // Vehicle has other active schedules - keep active status and assign earliest schedule's driver
+      const earliestSchedule = otherActiveSchedules[0];
+      await vehicleService.updateVehicleStatus(vehicleId, {
+        status: 'active',
+        driver_id: earliestSchedule.driver_id
+      });
+      return;
+    }
+
+    // 3. No active maintenance orders or active schedules - set vehicle to idle with no driver
+    await vehicleService.updateVehicleStatus(vehicleId, {
+      status: 'idle',
+      driver_id: null
+    });
   },
 
   async updateVehicleScheduleStatus(id, status) {
