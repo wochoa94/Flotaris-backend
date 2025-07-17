@@ -367,16 +367,23 @@ export const vehicleScheduleService = {
 
     const { vehicle_id: vehicleId, driver_id: driverId } = scheduleToDelete;
 
+    console.log(`[deleteVehicleSchedule] Deleting schedule ID: ${id}, Vehicle ID: ${vehicleId}, Driver ID: ${driverId}`);
+
     // Delete the vehicle schedule
     const { error } = await supabaseAdmin
       .from('vehicle_schedules')
       .delete()
       .eq('id', id);
 
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error(`[deleteVehicleSchedule] Error deleting schedule ID ${id}:`, error);
+      throw new Error(error.message);
+    }
+    console.log(`[deleteVehicleSchedule] Successfully deleted schedule ID: ${id}`);
 
     // After deletion, determine the new vehicle state
     // 1. Check for active maintenance orders for this vehicle
+    console.log(`[deleteVehicleSchedule] Checking for active maintenance orders for vehicle ID: ${vehicleId}`);
     const { data: activeMaintenanceOrders, error: maintenanceError } = await supabaseAdmin
       .from('maintenance_orders')
       .select('id')
@@ -384,10 +391,15 @@ export const vehicleScheduleService = {
       .eq('status', 'active')
       .limit(1);
 
-    if (maintenanceError) throw new Error(maintenanceError.message);
+    if (maintenanceError) {
+      console.error(`[deleteVehicleSchedule] Error fetching active maintenance orders for vehicle ID ${vehicleId}:`, maintenanceError);
+      throw new Error(maintenanceError.message);
+    }
+    console.log(`[deleteVehicleSchedule] Active maintenance orders found for vehicle ID ${vehicleId}:`, activeMaintenanceOrders);
 
     if (activeMaintenanceOrders && activeMaintenanceOrders.length > 0) {
       // Vehicle has active maintenance orders - set to maintenance status with no driver
+      console.log(`[deleteVehicleSchedule] Vehicle ${vehicleId} has active maintenance. Setting status to 'maintenance', driver to null.`);
       await vehicleService.updateVehicleStatus(vehicleId, {
         status: 'maintenance',
         driver_id: null
@@ -396,6 +408,7 @@ export const vehicleScheduleService = {
     }
 
     // 2. Check for other active vehicle schedules for this vehicle
+    console.log(`[deleteVehicleSchedule] Checking for other active vehicle schedules for vehicle ID: ${vehicleId} (excluding ${id})`);
     const { data: otherActiveSchedules, error: scheduleError } = await supabaseAdmin
       .from('vehicle_schedules')
       .select('driver_id, start_date')
@@ -403,11 +416,16 @@ export const vehicleScheduleService = {
       .eq('status', 'active')
       .order('start_date', { ascending: true });
 
-    if (scheduleError) throw new Error(scheduleError.message);
+    if (scheduleError) {
+      console.error(`[deleteVehicleSchedule] Error fetching other active schedules for vehicle ID ${vehicleId}:`, scheduleError);
+      throw new Error(scheduleError.message);
+    }
+    console.log(`[deleteVehicleSchedule] Other active schedules found for vehicle ID ${vehicleId}:`, otherActiveSchedules);
 
     if (otherActiveSchedules && otherActiveSchedules.length > 0) {
       // Vehicle has other active schedules - keep active status and assign earliest schedule's driver
       const earliestSchedule = otherActiveSchedules[0];
+      console.log(`[deleteVehicleSchedule] Vehicle ${vehicleId} has other active schedules. Setting status to 'active', driver to ${earliestSchedule.driver_id}.`);
       await vehicleService.updateVehicleStatus(vehicleId, {
         status: 'active',
         driver_id: earliestSchedule.driver_id
@@ -416,6 +434,7 @@ export const vehicleScheduleService = {
     }
 
     // 3. No active maintenance orders or active schedules - set vehicle to idle with no driver
+    console.log(`[deleteVehicleSchedule] Vehicle ${vehicleId} has no active engagements. Setting status to 'idle', driver to null.`);
     await vehicleService.updateVehicleStatus(vehicleId, {
       status: 'idle',
       driver_id: null

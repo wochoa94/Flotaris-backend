@@ -241,6 +241,8 @@ export const vehicleService = {
   },
 
   async updateVehicleStatus(id, updateData) {
+    console.log(`[updateVehicleStatus] Received update for vehicle ID: ${id}, Data:`, updateData);
+    
     // Manually map vehicleName to name if present, as per database schema
     let dataForDb = { ...updateData };
     if (dataForDb.vehicleName !== undefined) {
@@ -258,6 +260,7 @@ export const vehicleService = {
     
     // Convert camelCase keys to snake_case for database
     const snakeCaseData = convertKeysToSnakeCase(dataForDb);
+    console.log(`[updateVehicleStatus] Converted to snake_case for DB:`, snakeCaseData);
     
     const { data, error } = await supabaseAdmin
       .from('vehicles')
@@ -266,7 +269,11 @@ export const vehicleService = {
       .select()
       .single();
 
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error(`[updateVehicleStatus] Supabase update error for vehicle ID ${id}:`, error);
+      throw new Error(error.message);
+    }
+    console.log(`[updateVehicleStatus] Supabase update successful for vehicle ID ${id}, Data:`, data);
     
     if (!data) {
       throw new Error('Vehicle not found');
