@@ -6,6 +6,73 @@ import { startOfDay, endOfDay } from 'date-fns';
 import { zonedTimeToUtc } from 'date-fns-tz';
 
 export const vehicleScheduleService = {
+  async getAllVehicleSchedules() {
+    const { data, error } = await supabaseAdmin
+      .from('vehicle_schedules')
+      .select(`
+        *,
+        vehicles!vehicle_schedules_vehicle_id_fkey (
+          id,
+          name,
+          make,
+          model,
+          year,
+          license_plate,
+          mileage
+        ),
+        drivers!vehicle_schedules_driver_id_fkey (
+          id,
+          name,
+          email
+        )
+      `);
+
+    if (error) throw new Error(error.message);
+
+    // Convert snake_case keys to camelCase for frontend
+    const convertedSchedules = convertKeysToCamelCase(data || []);
+
+    // Process vehicle and driver information for each schedule
+    const processedSchedules = convertedSchedules.map(schedule => {
+      let vehicle = null;
+      let driver = null;
+      
+      // Process vehicle information
+      if (schedule.vehicles && schedule.vehicles.id) {
+        const vehicleData = schedule.vehicles;
+        vehicle = {
+          id: vehicleData.id,
+          name: vehicleData.name,
+          make: vehicleData.make,
+          model: vehicleData.model,
+          year: vehicleData.year,
+          licensePlate: vehicleData.licensePlate,
+          mileage: vehicleData.mileage
+        };
+      }
+
+      // Process driver information
+      if (schedule.drivers && schedule.drivers.id) {
+        const driverData = schedule.drivers;
+        driver = {
+          id: driverData.id,
+          name: driverData.name,
+          email: driverData.email
+        };
+      }
+
+      return {
+        ...schedule,
+        vehicle,
+        driver,
+        vehicles: undefined, // Remove the nested vehicles object
+        drivers: undefined   // Remove the nested drivers object
+      };
+    });
+
+    return processedSchedules;
+  },
+
   async getPaginatedVehicleSchedules(filters) {
     const {
       search,

@@ -1,6 +1,16 @@
 import { vehicleScheduleService } from '../services/vehicleScheduleService.js';
 
 export const vehicleScheduleController = {
+  async getAllVehicleSchedules(req, res) {
+    try {
+      const vehicleSchedules = await vehicleScheduleService.getAllVehicleSchedules();
+      res.json(vehicleSchedules);
+    } catch (error) {
+      console.error('Get all vehicle schedules error:', error);
+      res.status(500).json({ error: 'Failed to fetch all vehicle schedules' });
+    }
+  },
+
   async getPaginatedVehicleSchedules(req, res) {
     try {
       const {

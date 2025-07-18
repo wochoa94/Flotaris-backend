@@ -2,6 +2,55 @@ import { supabaseAdmin } from '../config/supabase.js';
 import { convertKeysToSnakeCase, convertKeysToCamelCase } from '../utils/caseConverter.js';
 
 export const driverService = {
+  async getAllDrivers() {
+    const { data, error } = await supabaseAdmin
+      .from('drivers')
+      .select(`
+        *,
+        vehicles!vehicles_driver_id_fkey (
+          id,
+          name,
+          make,
+          model,
+          year,
+          license_plate,
+          mileage
+        )
+      `);
+
+    if (error) throw new Error(error.message);
+
+    // Convert snake_case keys to camelCase for frontend
+    const convertedDrivers = convertKeysToCamelCase(data || []);
+
+    // Process vehicle information for each driver
+    const processedDrivers = convertedDrivers.map(driver => {
+      let assignedVehicle = null;
+      
+      // Check if driver has an assigned vehicle
+      if (driver.vehicles && Array.isArray(driver.vehicles) && driver.vehicles.length > 0) {
+        const vehicle = driver.vehicles[0]; // Should only be one vehicle per driver
+        assignedVehicle = {
+          id: vehicle.id,
+          name: vehicle.name,
+          make: vehicle.make,
+          model: vehicle.model,
+          year: vehicle.year,
+          licensePlate: vehicle.licensePlate,
+          mileage: vehicle.mileage
+        };
+      }
+
+      return {
+        ...driver,
+        assignedVehicle,
+        vehicles: undefined // Remove the nested vehicles array
+      };
+    });
+
+    return processedDrivers;
+  },
+
   async getPaginatedDrivers(filters) {
     const {
       search,

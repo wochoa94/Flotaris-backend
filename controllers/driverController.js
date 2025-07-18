@@ -1,6 +1,16 @@
 import { driverService } from '../services/driverService.js';
 
 export const driverController = {
+  async getAllDrivers(req, res) {
+    try {
+      const drivers = await driverService.getAllDrivers();
+      res.json(drivers);
+    } catch (error) {
+      console.error('Get all drivers error:', error);
+      res.status(500).json({ error: 'Failed to fetch all drivers' });
+    }
+  },
+
   async getPaginatedDrivers(req, res) {
     try {
       const {

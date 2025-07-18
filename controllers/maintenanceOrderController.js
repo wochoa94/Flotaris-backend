@@ -1,6 +1,16 @@
 import { maintenanceOrderService } from '../services/maintenanceOrderService.js';
 
 export const maintenanceOrderController = {
+  async getAllMaintenanceOrders(req, res) {
+    try {
+      const maintenanceOrders = await maintenanceOrderService.getAllMaintenanceOrders();
+      res.json(maintenanceOrders);
+    } catch (error) {
+      console.error('Get all maintenance orders error:', error);
+      res.status(500).json({ error: 'Failed to fetch all maintenance orders' });
+    }
+  },
+
   async getPaginatedMaintenanceOrders(req, res) {
     try {
       const {

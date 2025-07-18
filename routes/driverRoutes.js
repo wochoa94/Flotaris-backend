@@ -4,6 +4,7 @@ import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
 
+router.get('/', authenticateToken, driverController.getAllDrivers);
 router.get('/paginated', authenticateToken, driverController.getPaginatedDrivers);
 router.post('/', authenticateToken, driverController.createDriver);
 router.put('/:id', authenticateToken, driverController.updateDriver);

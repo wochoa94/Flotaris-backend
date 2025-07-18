@@ -5,6 +5,55 @@ import { startOfDay, endOfDay } from 'date-fns';
 import { zonedTimeToUtc } from 'date-fns-tz';
 
 export const maintenanceOrderService = {
+  async getAllMaintenanceOrders() {
+    const { data, error } = await supabaseAdmin
+      .from('maintenance_orders')
+      .select(`
+        *,
+        vehicles!maintenance_orders_vehicle_id_fkey (
+          id,
+          name,
+          make,
+          model,
+          year,
+          license_plate,
+          mileage
+        )
+      `);
+
+    if (error) throw new Error(error.message);
+
+    // Convert snake_case keys to camelCase for frontend
+    const convertedOrders = convertKeysToCamelCase(data || []);
+
+    // Process vehicle information for each maintenance order
+    const processedOrders = convertedOrders.map(order => {
+      let vehicle = null;
+      
+      // Check if maintenance order has an associated vehicle
+      if (order.vehicles && order.vehicles.id) {
+        const vehicleData = order.vehicles;
+        vehicle = {
+          id: vehicleData.id,
+          name: vehicleData.name,
+          make: vehicleData.make,
+          model: vehicleData.model,
+          year: vehicleData.year,
+          licensePlate: vehicleData.licensePlate,
+          mileage: vehicleData.mileage
+        };
+      }
+
+      return {
+        ...order,
+        vehicle,
+        vehicles: undefined // Remove the nested vehicles object
+      };
+    });
+
+    return processedOrders;
+  },
+
   async getPaginatedMaintenanceOrders(filters) {
     const {
       search,

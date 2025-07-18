@@ -4,6 +4,7 @@ import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
 
+router.get('/', authenticateToken, maintenanceOrderController.getAllMaintenanceOrders);
 router.get('/summary', authenticateToken, maintenanceOrderController.getMaintenanceOrderSummary);
 router.get('/paginated', authenticateToken, maintenanceOrderController.getPaginatedMaintenanceOrders);
 router.post('/', authenticateToken, maintenanceOrderController.createMaintenanceOrder);
